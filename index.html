@@ -1,15 +1,185 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-gray-900 text-white">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Netlify Functions Demo</title>
+    <title>Netlify Functions Test Dashboard</title>
+    <!-- Using Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      /* Simple transition for buttons */
+      .btn {
+        @apply px-5 py-2.5 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-all duration-200 ease-in-out;
+      }
+      .btn-primary {
+        @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+      }
+      .btn-secondary {
+        @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+      }
+    </style>
   </head>
-  <body>
-    <h1>Netlify Functions Demo</h1>
-    <button id="call-function">Call Function</button>
-    <p id="response"></p>
+  <body class="antialiased">
+    <div class="max-w-4xl mx-auto p-6 md:p-8">
+      <header class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-indigo-400">
+          Netlify Functions Dashboard
+        </h1>
+        <p class="text-lg text-gray-400 mt-2">
+          A simple interface to test multiple serverless function endpoints.
+        </p>
+      </header>
 
-    <script src="script.js"></script>
+      <main class="space-y-8">
+        <!-- Test Section 1: Hello Function -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-200">
+            1. Basic Function Call
+          </h2>
+          <p class="text-gray-400 mb-4">
+            Calls the `/hello` endpoint to get a secret message from an
+            environment variable.
+          </p>
+          <button id="call-hello" class="btn btn-primary">Call /hello</button>
+        </div>
+
+        <!-- Test Section 2: Get Users -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-200">
+            2. Get Static JSON Data
+          </h2>
+          <p class="text-gray-400 mb-4">
+            Calls the `/getUsers` endpoint to fetch a list of users.
+          </p>
+          <button id="call-users" class="btn btn-primary">
+            Call /getUsers
+          </button>
+        </div>
+
+        <!-- Test Section 3: Get Products with Filtering -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <h2 class="text-2xl font-semibold mb-4 text-gray-200">
+            3. Function with Query Parameters
+          </h2>
+          <p class="text-gray-400 mb-4">
+            Calls the `/getProducts` endpoint. You can fetch all products or
+            filter by category.
+          </p>
+          <div class="flex flex-wrap items-center gap-4">
+            <button id="call-products-all" class="btn btn-primary">
+              Call /getProducts (All)
+            </button>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                id="category-input"
+                placeholder="e.g., electronics"
+                class="bg-gray-700 border border-gray-600 text-white rounded-lg px-4 py-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <button id="call-products-filtered" class="btn btn-secondary">
+                Filter by Category
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Response Display Area -->
+        <div class="mt-10">
+          <h3 class="text-xl font-semibold text-gray-300 mb-3">
+            Function Response:
+          </h3>
+          <div
+            class="bg-gray-900 border border-gray-700 rounded-lg p-4 min-h-[150px]"
+          >
+            <pre
+              id="response-output"
+              class="text-green-400 whitespace-pre-wrap break-all"
+            ></pre>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      const responseOutput = document.getElementById("response-output");
+
+      /**
+       * A helper function to call a Netlify function and display its response.
+       * @param {string} endpoint - The name of the function to call (e.g., 'hello').
+       * @param {string} queryString - Optional query string to append (e.g., '?category=books').
+       */
+      async function callFunction(endpoint, queryString = "") {
+        // 1. Show a loading state
+        responseOutput.textContent = "Calling function...";
+        responseOutput.classList.remove("text-red-400");
+        responseOutput.classList.add("text-green-400");
+
+        try {
+          // 2. Construct the full URL and make the fetch request
+          const url = `/.netlify/functions/${endpoint}${queryString}`;
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // 3. Display the formatted JSON response
+          responseOutput.textContent = JSON.stringify(data, null, 2);
+        } catch (error) {
+          // 4. Display any errors that occur
+          console.error("Error calling function:", error);
+          responseOutput.textContent = `Error: ${error.message}`;
+          responseOutput.classList.remove("text-green-400");
+          responseOutput.classList.add("text-red-400");
+        }
+      }
+
+      // --- Event Listeners for Buttons ---
+
+      // Call the /hello function
+      document.getElementById("call-hello").addEventListener("click", () => {
+        callFunction("hello");
+      });
+
+      // Call the /getUsers function
+      document.getElementById("call-users").addEventListener("click", () => {
+        callFunction("getUsers");
+      });
+
+      // Call the /getProducts function for all products
+      document
+        .getElementById("call-products-all")
+        .addEventListener("click", () => {
+          callFunction("getProducts");
+        });
+
+      // Call the /getProducts function with a category filter
+      document
+        .getElementById("call-products-filtered")
+        .addEventListener("click", () => {
+          const category = document.getElementById("category-input").value;
+          if (category) {
+            callFunction(
+              "getProducts",
+              `?category=${encodeURIComponent(category)}`
+            );
+          } else {
+            responseOutput.textContent = "Please enter a category to filter.";
+            responseOutput.classList.remove("text-green-400");
+            responseOutput.classList.add("text-red-400");
+          }
+        });
+    </script>
   </body>
 </html>
